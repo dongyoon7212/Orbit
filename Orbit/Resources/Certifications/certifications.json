@@ -1,0 +1,241 @@
+{
+  "version": "1.0",
+  "updatedAt": "2024-01-01",
+  "certifications": [
+    {
+      "id": "big_data_engineer",
+      "name": "빅데이터분석기사",
+      "nameEn": "Big Data Analytics Engineer",
+      "organization": "한국데이터산업진흥원",
+      "curriculumYear": 2024,
+      "examFormat": "필기 + 실기",
+      "estimatedTotalHours": 120,
+      "subjects": [
+        {
+          "id": "big_data_engineer_s1",
+          "name": "빅데이터 분석 기획",
+          "nameEn": "Big Data Analysis Planning",
+          "planet": "mercury",
+          "order": 1,
+          "estimatedHours": 20,
+          "chapters": [
+            {
+              "id": "big_data_engineer_s1_c1",
+              "title": "빅데이터의 이해",
+              "estimatedMinutes": 60,
+              "importance": "high",
+              "order": 1,
+              "keywords": ["빅데이터 정의", "3V", "5V", "데이터 생태계"]
+            },
+            {
+              "id": "big_data_engineer_s1_c2",
+              "title": "빅데이터 기술 및 제도",
+              "estimatedMinutes": 60,
+              "importance": "medium",
+              "order": 2,
+              "keywords": ["데이터 기술 동향", "개인정보보호법", "데이터 3법"]
+            },
+            {
+              "id": "big_data_engineer_s1_c3",
+              "title": "빅데이터 분석 기획",
+              "estimatedMinutes": 90,
+              "importance": "high",
+              "order": 3,
+              "keywords": ["분석 과제 도출", "분석 프로세스", "ROI", "우선순위"]
+            },
+            {
+              "id": "big_data_engineer_s1_c4",
+              "title": "데이터 수집 및 저장 계획",
+              "estimatedMinutes": 60,
+              "importance": "medium",
+              "order": 4,
+              "keywords": ["데이터 수집 방법", "크롤링", "API", "데이터 레이크"]
+            },
+            {
+              "id": "big_data_engineer_s1_c5",
+              "title": "데이터 품질 관리",
+              "estimatedMinutes": 45,
+              "importance": "low",
+              "order": 5,
+              "keywords": ["데이터 품질 지표", "MDM", "데이터 거버넌스"]
+            }
+          ]
+        },
+        {
+          "id": "big_data_engineer_s2",
+          "name": "빅데이터 탐색 및 전처리",
+          "nameEn": "Big Data Exploration and Preprocessing",
+          "planet": "mars",
+          "order": 2,
+          "estimatedHours": 30,
+          "chapters": [
+            {
+              "id": "big_data_engineer_s2_c1",
+              "title": "데이터 탐색",
+              "estimatedMinutes": 90,
+              "importance": "high",
+              "order": 1,
+              "keywords": ["EDA", "기술 통계", "분포", "이상치 탐지"]
+            },
+            {
+              "id": "big_data_engineer_s2_c2",
+              "title": "데이터 전처리",
+              "estimatedMinutes": 90,
+              "importance": "high",
+              "order": 2,
+              "keywords": ["결측치 처리", "이상치 처리", "정규화", "표준화"]
+            },
+            {
+              "id": "big_data_engineer_s2_c3",
+              "title": "변수 선택 및 차원 축소",
+              "estimatedMinutes": 75,
+              "importance": "high",
+              "order": 3,
+              "keywords": ["PCA", "Feature Selection", "상관분석", "VIF"]
+            },
+            {
+              "id": "big_data_engineer_s2_c4",
+              "title": "데이터 분할 및 샘플링",
+              "estimatedMinutes": 60,
+              "importance": "medium",
+              "order": 4,
+              "keywords": ["Train/Test Split", "K-Fold", "SMOTE", "언더샘플링"]
+            },
+            {
+              "id": "big_data_engineer_s2_c5",
+              "title": "텍스트 데이터 처리",
+              "estimatedMinutes": 60,
+              "importance": "medium",
+              "order": 5,
+              "keywords": ["토큰화", "TF-IDF", "Word2Vec", "감성 분석"]
+            },
+            {
+              "id": "big_data_engineer_s2_c6",
+              "title": "시계열 데이터 처리",
+              "estimatedMinutes": 60,
+              "importance": "medium",
+              "order": 6,
+              "keywords": ["시계열 분해", "ARIMA", "계절성", "추세"]
+            }
+          ]
+        },
+        {
+          "id": "big_data_engineer_s3",
+          "name": "빅데이터 모델링",
+          "nameEn": "Big Data Modeling",
+          "planet": "jupiter",
+          "order": 3,
+          "estimatedHours": 40,
+          "chapters": [
+            {
+              "id": "big_data_engineer_s3_c1",
+              "title": "분류 알고리즘",
+              "estimatedMinutes": 90,
+              "importance": "high",
+              "order": 1,
+              "keywords": ["의사결정나무", "Random Forest", "SVM", "KNN", "로지스틱 회귀"]
+            },
+            {
+              "id": "big_data_engineer_s3_c2",
+              "title": "회귀 알고리즘",
+              "estimatedMinutes": 75,
+              "importance": "high",
+              "order": 2,
+              "keywords": ["선형 회귀", "릿지", "라쏘", "다항 회귀"]
+            },
+            {
+              "id": "big_data_engineer_s3_c3",
+              "title": "군집화 알고리즘",
+              "estimatedMinutes": 75,
+              "importance": "high",
+              "order": 3,
+              "keywords": ["K-Means", "DBSCAN", "계층 군집", "실루엣 계수"]
+            },
+            {
+              "id": "big_data_engineer_s3_c4",
+              "title": "앙상블 기법",
+              "estimatedMinutes": 75,
+              "importance": "high",
+              "order": 4,
+              "keywords": ["Bagging", "Boosting", "Stacking", "XGBoost", "LightGBM"]
+            },
+            {
+              "id": "big_data_engineer_s3_c5",
+              "title": "딥러닝 기초",
+              "estimatedMinutes": 90,
+              "importance": "medium",
+              "order": 5,
+              "keywords": ["신경망 구조", "활성화 함수", "역전파", "CNN", "RNN"]
+            },
+            {
+              "id": "big_data_engineer_s3_c6",
+              "title": "모델 최적화",
+              "estimatedMinutes": 60,
+              "importance": "medium",
+              "order": 6,
+              "keywords": ["하이퍼파라미터 튜닝", "Grid Search", "Cross Validation", "조기 종료"]
+            },
+            {
+              "id": "big_data_engineer_s3_c7",
+              "title": "비정형 데이터 분석",
+              "estimatedMinutes": 60,
+              "importance": "low",
+              "order": 7,
+              "keywords": ["이미지 분류", "NLP", "추천 시스템", "이상 감지"]
+            }
+          ]
+        },
+        {
+          "id": "big_data_engineer_s4",
+          "name": "빅데이터 결과 해석 및 활용",
+          "nameEn": "Big Data Result Interpretation and Utilization",
+          "planet": "saturn",
+          "order": 4,
+          "estimatedHours": 30,
+          "chapters": [
+            {
+              "id": "big_data_engineer_s4_c1",
+              "title": "분류 모델 평가",
+              "estimatedMinutes": 75,
+              "importance": "high",
+              "order": 1,
+              "keywords": ["정확도", "정밀도", "재현율", "F1 Score", "AUC-ROC", "혼동행렬"]
+            },
+            {
+              "id": "big_data_engineer_s4_c2",
+              "title": "회귀 모델 평가",
+              "estimatedMinutes": 60,
+              "importance": "high",
+              "order": 2,
+              "keywords": ["MSE", "RMSE", "MAE", "R-Squared", "잔차 분석"]
+            },
+            {
+              "id": "big_data_engineer_s4_c3",
+              "title": "시각화 및 보고서 작성",
+              "estimatedMinutes": 60,
+              "importance": "medium",
+              "order": 3,
+              "keywords": ["데이터 시각화", "대시보드", "인사이트 도출", "스토리텔링"]
+            },
+            {
+              "id": "big_data_engineer_s4_c4",
+              "title": "분석 결과 활용",
+              "estimatedMinutes": 60,
+              "importance": "medium",
+              "order": 4,
+              "keywords": ["의사결정 지원", "비즈니스 적용", "A/B 테스트", "운영 모델"]
+            },
+            {
+              "id": "big_data_engineer_s4_c5",
+              "title": "빅데이터 윤리 및 보안",
+              "estimatedMinutes": 45,
+              "importance": "low",
+              "order": 5,
+              "keywords": ["알고리즘 편향", "공정성", "개인정보 비식별화", "데이터 보안"]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

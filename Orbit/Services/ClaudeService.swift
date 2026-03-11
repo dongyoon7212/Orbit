@@ -1,0 +1,237 @@
+// ClaudeService.swift
+// Orbit
+//
+// Cloudflare Worker 프록시를 통한 Claude API 호출
+// ⚠️ API 키는 Worker 환경변수에만 보관. 앱에는 Worker URL만 저장.
+
+import Foundation
+
+// MARK: - 플랜 생성 요청 파라미터
+
+struct PlanRequest {
+    let certificationId: String
+    let certificationName: String
+    let subjects: [SubjectDTO]
+    let examDate: Date
+    let studyDaysPerWeek: [Int]
+    let dailyStudyMinutes: Int
+    let experienceLevel: ExperienceLevel
+}
+
+// MARK: - Claude 응답 구조체
+
+struct GeneratedPlan: Codable {
+    let dailySchedule: [DailyScheduleItem]
+    let tips: [SubjectTip]
+    let totalStudyDays: Int
+    let reviewWeekStart: String   // "YYYY-MM-DD"
+}
+
+struct DailyScheduleItem: Codable {
+    let date: String              // "YYYY-MM-DD"
+    let chapterIds: [String]
+    let totalMinutes: Int
+    let memo: String?
+}
+
+struct SubjectTip: Codable {
+    let subjectId: String
+    let tip: String
+    let chapterTips: [ChapterTip]
+}
+
+struct ChapterTip: Codable {
+    let chapterId: String
+    let tip: String
+}
+
+// MARK: - ClaudeService
+
+actor ClaudeService {
+    static let shared = ClaudeService()
+
+    // Worker URL은 앱 설정에서 관리 (API 키 아님)
+    private let workerBaseURL: String = {
+        guard let url = Bundle.main.object(forInfoDictionaryKey: "WORKER_BASE_URL") as? String,
+              !url.isEmpty, url != "$(WORKER_BASE_URL)" else {
+            return ""  // 미설정 시 빈 문자열 → 오류 처리
+        }
+        return url
+    }()
+
+    private let session = URLSession.shared
+    private let dateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        f.locale = Locale(identifier: "ko_KR")
+        return f
+    }()
+
+    private init() {}
+
+    // MARK: - 공부 플랜 생성
+
+    func generateStudyPlan(request: PlanRequest) async throws -> GeneratedPlan {
+        guard !workerBaseURL.isEmpty else {
+            throw ClaudeError.workerURLNotConfigured
+        }
+
+        let prompt = buildPlanPrompt(request: request)
+        let responseText = try await callClaude(prompt: prompt, endpoint: "/generate-plan")
+
+        // Claude 응답에서 JSON 파싱
+        return try parsePlanResponse(responseText)
+    }
+
+    // MARK: - Prompt 빌더
+
+    private func buildPlanPrompt(request: PlanRequest) -> String {
+        let weekdayNames = ["일", "월", "화", "수", "목", "금", "토"]
+        let studyDays = request.studyDaysPerWeek.map { weekdayNames[$0] }.joined(separator: ", ")
+        let examDateStr = dateFormatter.string(from: request.examDate)
+        let todayStr = dateFormatter.string(from: Date())
+
+        let subjectsDescription = request.subjects.map { subject in
+            let chapters = subject.chapters.map { ch in
+                "  - [\(ch.importance.uppercased())] \(ch.title) (\(ch.estimatedMinutes)분)"
+            }.joined(separator: "\n")
+            return "### \(subject.name)\n\(chapters)"
+        }.joined(separator: "\n\n")
+
+        return """
+        당신은 자격증 공부 플래너입니다. 아래 정보를 바탕으로 최적의 일별 공부 스케줄을 JSON 형식으로 생성해주세요.
+
+        ## 사용자 정보
+        - 자격증: \(request.certificationName) (2024년 출제기준)
+        - 오늘 날짜: \(todayStr)
+        - 시험일: \(examDateStr)
+        - 경험 수준: \(request.experienceLevel.displayName)
+        - 공부 가능 요일: \(studyDays)
+        - 하루 공부 가능 시간: \(request.dailyStudyMinutes)분
+
+        ## 커리큘럼
+        \(subjectsDescription)
+
+        ## 요구사항
+        1. 시험 1주 전(복습 주간)에는 새 챕터 배정 금지 — 복습과 모의고사만
+        2. 중요도(HIGH > MEDIUM > LOW) 고려하여 배분
+        3. 하루 배정 시간은 dailyStudyMinutes를 초과하지 않도록
+        4. 경험자는 LOW 챕터 비중 줄이기
+        5. 각 과목(subject)별로 순서대로 진행 (이전 과목 완료 후 다음 과목)
+
+        ## 응답 형식 (반드시 아래 JSON만 출력)
+        {
+          "dailySchedule": [
+            {
+              "date": "YYYY-MM-DD",
+              "chapterIds": ["chapter_id_1", "chapter_id_2"],
+              "totalMinutes": 60,
+              "memo": "선택적 메모"
+            }
+          ],
+          "tips": [
+            {
+              "subjectId": "subject_id",
+              "tip": "과목 전체 꿀팁",
+              "chapterTips": [
+                {
+                  "chapterId": "chapter_id",
+                  "tip": "챕터별 꿀팁"
+                }
+              ]
+            }
+          ],
+          "totalStudyDays": 30,
+          "reviewWeekStart": "YYYY-MM-DD"
+        }
+        """
+    }
+
+    // MARK: - API 호출
+
+    private func callClaude(prompt: String, endpoint: String) async throws -> String {
+        guard let url = URL(string: workerBaseURL + endpoint) else {
+            throw ClaudeError.invalidURL
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let body: [String: Any] = [
+            "prompt": prompt,
+            "model": "claude-sonnet-4-5",
+            "max_tokens": 4096
+        ]
+
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        request.timeoutInterval = 60  // Claude 응답은 최대 60초 대기
+
+        let (data, response) = try await session.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw ClaudeError.invalidResponse
+        }
+
+        guard httpResponse.statusCode == 200 else {
+            let errorBody = String(data: data, encoding: .utf8) ?? "Unknown error"
+            throw ClaudeError.serverError(httpResponse.statusCode, errorBody)
+        }
+
+        // Worker 응답: { "content": "..." }
+        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let content = json["content"] as? String else {
+            throw ClaudeError.parseError("Worker 응답 형식 오류")
+        }
+
+        return content
+    }
+
+    // MARK: - 응답 파싱
+
+    private func parsePlanResponse(_ text: String) throws -> GeneratedPlan {
+        // Claude가 ```json ... ``` 블록으로 감쌀 수 있으므로 추출
+        let jsonText: String
+        if let start = text.range(of: "{"),
+           let end = text.range(of: "}", options: .backwards) {
+            jsonText = String(text[start.lowerBound...end.upperBound])
+        } else {
+            jsonText = text
+        }
+
+        guard let data = jsonText.data(using: .utf8) else {
+            throw ClaudeError.parseError("UTF-8 인코딩 실패")
+        }
+
+        do {
+            return try JSONDecoder().decode(GeneratedPlan.self, from: data)
+        } catch {
+            throw ClaudeError.parseError("플랜 JSON 파싱 실패: \(error.localizedDescription)")
+        }
+    }
+}
+
+// MARK: - Errors
+
+enum ClaudeError: LocalizedError {
+    case workerURLNotConfigured
+    case invalidURL
+    case invalidResponse
+    case serverError(Int, String)
+    case parseError(String)
+
+    var errorDescription: String? {
+        switch self {
+        case .workerURLNotConfigured:
+            return "Cloudflare Worker URL이 설정되지 않았습니다."
+        case .invalidURL:
+            return "잘못된 URL입니다."
+        case .invalidResponse:
+            return "서버 응답이 올바르지 않습니다."
+        case .serverError(let code, let body):
+            return "서버 오류 (\(code)): \(body)"
+        case .parseError(let msg):
+            return "응답 파싱 실패: \(msg)"
+        }
+    }
+}

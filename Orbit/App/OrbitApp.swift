@@ -1,31 +1,36 @@
+// OrbitApp.swift
+// Orbit
 //
-//  OrbitApp.swift
-//  Orbit
-//
-//  Created by DongYoon on 3/11/26.
-//
+// 앱 진입점 — SwiftData 컨테이너 설정 + 온보딩/홈 라우팅
 
 import SwiftUI
 import SwiftData
 
 @main
 struct OrbitApp: App {
+
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
-            Item.self,
+            UserMission.self,
+            PlanetSubject.self,
+            ExplorationChapter.self,
+            StudyPlan.self,
+            DailyAssignment.self,
+            FocusSession.self,
+            MissedDayLog.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
         do {
             return try ModelContainer(for: schema, configurations: [modelConfiguration])
         } catch {
-            fatalError("Could not create ModelContainer: \(error)")
+            fatalError("SwiftData ModelContainer 생성 실패: \(error)")
         }
     }()
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RootView()
         }
         .modelContainer(sharedModelContainer)
     }
