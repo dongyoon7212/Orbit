@@ -176,9 +176,18 @@ actor ClaudeService {
             throw ClaudeError.serverError(httpResponse.statusCode, errorBody)
         }
 
-        // Anthropic API 응답 형식: { "content": [{"type": "text", "text": "..."}] }
-        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let contentArray = json["content"] as? [[String: Any]],
+        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            throw ClaudeError.parseError("응답을 파싱할 수 없습니다")
+        }
+
+        // Anthropic API 오류 응답: { "type": "error", "error": { "message": "..." } }
+        if let errorObj = json["error"] as? [String: Any],
+           let message = errorObj["message"] as? String {
+            throw ClaudeError.apiError(message)
+        }
+
+        // 정상 응답: { "content": [{"type": "text", "text": "..."}] }
+        guard let contentArray = json["content"] as? [[String: Any]],
               let firstContent = contentArray.first,
               let text = firstContent["text"] as? String else {
             throw ClaudeError.parseError("응답 형식 오류: \(String(data: data, encoding: .utf8) ?? "")")
@@ -218,6 +227,7 @@ enum ClaudeError: LocalizedError {
     case invalidURL
     case invalidResponse
     case serverError(Int, String)
+    case apiError(String)
     case parseError(String)
 
     var errorDescription: String? {
@@ -230,6 +240,8 @@ enum ClaudeError: LocalizedError {
             return "서버 응답이 올바르지 않습니다."
         case .serverError(let code, let body):
             return "서버 오류 (\(code)): \(body)"
+        case .apiError(let message):
+            return "AI 서비스 오류: \(message)"
         case .parseError(let msg):
             return "응답 파싱 실패: \(msg)"
         }
