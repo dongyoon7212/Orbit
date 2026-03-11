@@ -72,7 +72,7 @@ actor ClaudeService {
         }
 
         let prompt = buildPlanPrompt(request: request)
-        let responseText = try await callClaude(prompt: prompt, endpoint: "/generate-plan")
+        let responseText = try await callClaude(prompt: prompt)
 
         // Claude 응답에서 JSON 파싱
         return try parsePlanResponse(responseText)
@@ -144,8 +144,8 @@ actor ClaudeService {
 
     // MARK: - API 호출
 
-    private func callClaude(prompt: String, endpoint: String) async throws -> String {
-        guard let url = URL(string: workerBaseURL + endpoint) else {
+    private func callClaude(prompt: String) async throws -> String {
+        guard let url = URL(string: workerBaseURL + "/claude") else {
             throw ClaudeError.invalidURL
         }
 
@@ -153,14 +153,17 @@ actor ClaudeService {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
+        // Worker가 Anthropic API 형식을 그대로 전달하므로 messages 형식으로 전송
         let body: [String: Any] = [
-            "prompt": prompt,
-            "model": "claude-sonnet-4-5",
-            "max_tokens": 4096
+            "model": "claude-sonnet-4-5-20251101",
+            "max_tokens": 4096,
+            "messages": [
+                ["role": "user", "content": prompt]
+            ]
         ]
 
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
-        request.timeoutInterval = 60  // Claude 응답은 최대 60초 대기
+        request.timeoutInterval = 90  // Claude 응답은 최대 90초 대기
 
         let (data, response) = try await session.data(for: request)
 
@@ -173,13 +176,15 @@ actor ClaudeService {
             throw ClaudeError.serverError(httpResponse.statusCode, errorBody)
         }
 
-        // Worker 응답: { "content": "..." }
+        // Anthropic API 응답 형식: { "content": [{"type": "text", "text": "..."}] }
         guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let content = json["content"] as? String else {
-            throw ClaudeError.parseError("Worker 응답 형식 오류")
+              let contentArray = json["content"] as? [[String: Any]],
+              let firstContent = contentArray.first,
+              let text = firstContent["text"] as? String else {
+            throw ClaudeError.parseError("응답 형식 오류: \(String(data: data, encoding: .utf8) ?? "")")
         }
 
-        return content
+        return text
     }
 
     // MARK: - 응답 파싱
