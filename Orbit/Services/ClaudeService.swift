@@ -50,14 +50,9 @@ struct ChapterTip: Codable {
 actor ClaudeService {
     static let shared = ClaudeService()
 
-    // Worker URL은 앱 설정에서 관리 (API 키 아님)
-    private let workerBaseURL: String = {
-        guard let url = Bundle.main.object(forInfoDictionaryKey: "WORKER_BASE_URL") as? String,
-              !url.isEmpty, url != "$(WORKER_BASE_URL)" else {
-            return ""  // 미설정 시 빈 문자열 → 오류 처리
-        }
-        return url
-    }()
+    // Worker URL — API 키가 아닌 공개 엔드포인트이므로 코드에 직접 보관
+    // 실제 API 키는 Cloudflare Worker 환경변수에만 존재
+    private let workerBaseURL = "https://orbit-worker.orbit-dongyoon.workers.dev"
 
     private let session = URLSession.shared
     private let dateFormatter: DateFormatter = {
