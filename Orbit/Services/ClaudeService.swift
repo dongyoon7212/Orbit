@@ -52,7 +52,7 @@ actor ClaudeService {
 
     // Worker URL — API 키가 아닌 공개 엔드포인트이므로 코드에 직접 보관
     // 실제 API 키는 Cloudflare Worker 환경변수에만 존재
-    private let workerBaseURL = "https://orbit-worker.orbit-dongyoon.workers.dev"
+    private let workerBaseURL = "https://orbit-worker.dongyoon7212.workers.dev"
 
     private let session = URLSession.shared
     private let dateFormatter: DateFormatter = {
