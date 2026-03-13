@@ -161,7 +161,7 @@ actor ClaudeService {
         // Worker가 Anthropic API 형식을 그대로 전달하므로 messages 형식으로 전송
         let body: [String: Any] = [
             "model": "claude-sonnet-4-5",
-            "max_tokens": 4096,
+            "max_tokens": 8192,
             "messages": [
                 ["role": "user", "content": prompt]
             ]
@@ -228,8 +228,12 @@ actor ClaudeService {
 
         do {
             return try JSONDecoder().decode(GeneratedPlan.self, from: data)
-        } catch {
-            throw ClaudeError.parseError("플랜 JSON 파싱 실패: \(error.localizedDescription)\n원문: \(jsonText.prefix(300))")
+        } catch let decodeError {
+            // 파싱 실패 시 원문 앞/뒤 모두 표시해서 어디가 문제인지 파악
+            let preview = jsonText.count > 200
+                ? "\(jsonText.prefix(150))...\(jsonText.suffix(100))"
+                : jsonText
+            throw ClaudeError.parseError("파싱 실패: \(decodeError.localizedDescription)\n원문[\(jsonText.count)자]: \(preview)")
         }
     }
 }
