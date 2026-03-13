@@ -17,15 +17,13 @@ struct OnboardingContainerView: View {
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
-                // 진행 바 (플랜 생성 단계 제외)
-                if viewModel.currentStep != .generatingPlan {
-                    OnboardingProgressBar(
-                        currentStep: viewModel.currentStep.rawValue,
-                        totalSteps: OnboardingViewModel.Step.allCases.count - 1
-                    )
-                    .padding(.horizontal, 24)
-                    .padding(.top, 16)
-                }
+                // 진행 바 (플랜 확인 단계 포함하여 모든 단계 표시)
+                OnboardingProgressBar(
+                    currentStep: viewModel.currentStep.rawValue,
+                    totalSteps: OnboardingViewModel.Step.allCases.count - 1
+                )
+                .padding(.horizontal, 24)
+                .padding(.top, 16)
 
                 // 단계별 화면
                 Group {
@@ -40,8 +38,8 @@ struct OnboardingContainerView: View {
                         DailyHoursView(viewModel: viewModel)
                     case .experienceLevel:
                         ExperienceLevelView(viewModel: viewModel)
-                    case .generatingPlan:
-                        PlanGeneratingView(viewModel: viewModel)
+                    case .planConfirm:
+                        PlanConfirmView(viewModel: viewModel)
                     }
                 }
                 .transition(.asymmetric(

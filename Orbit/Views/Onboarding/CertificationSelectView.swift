@@ -52,13 +52,13 @@ struct CertificationCard: View {
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundStyle(.white)
 
-                Text("\(cert.organization) · \(cert.curriculumYear)년 출제기준")
+                Text("\(cert.organization) · \(cert.basedOn)")
                     .font(.system(size: 13))
                     .foregroundStyle(.white.opacity(0.6))
 
                 HStack(spacing: 8) {
-                    Label("\(cert.subjects.count)개 행성", systemImage: "globe")
-                    Label("약 \(cert.estimatedTotalHours)시간", systemImage: "clock")
+                    Label("\(cert.planets.count)개 행성", systemImage: "globe")
+                    Label("약 \(cert.totalChapterCount)챕터", systemImage: "list.bullet")
                 }
                 .font(.system(size: 12))
                 .foregroundStyle(.white.opacity(0.5))

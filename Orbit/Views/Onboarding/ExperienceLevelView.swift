@@ -24,9 +24,10 @@ struct ExperienceLevelView: View {
                 }
             }
             .padding(.horizontal, 24)
-        }, nextButtonTitle: "플랜 생성 시작", onNext: {
+        }, nextButtonTitle: "플랜 확인", onNext: {
             Task {
-                // generatePlan은 modelContext가 필요하므로 View에서 처리
+                // 알고리즘 즉시 실행 후 다음 단계로
+                await viewModel.computePlanPreview()
                 viewModel.goNext()
             }
         })

@@ -14,8 +14,6 @@ struct OrbitApp: App {
             UserMission.self,
             PlanetSubject.self,
             ExplorationChapter.self,
-            StudyPlan.self,
-            DailyAssignment.self,
             FocusSession.self,
             MissedDayLog.self,
         ])

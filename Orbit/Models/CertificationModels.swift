@@ -7,23 +7,21 @@ import Foundation
 import SwiftData
 
 // MARK: - UserMission (자격증 탐사 미션)
+
 @Model
 final class UserMission {
     var id: UUID
-    var certificationId: String       // JSON DB의 자격증 ID와 매핑
+    var certificationId: String       // JSON DB의 자격증 ID
     var certificationName: String     // 예: "빅데이터분석기사"
     var examDate: Date                // 시험일 (D-Day 기준)
     var studyDaysPerWeek: [Int]       // 0=일, 1=월, ..., 6=토
     var dailyStudyMinutes: Int        // 하루 공부 가능 시간 (분)
     var experienceLevel: ExperienceLevel
     var createdAt: Date
-    var isCompleted: Bool             // 자격증 취득 완료 여부
+    var isCompleted: Bool
 
     @Relationship(deleteRule: .cascade)
     var subjects: [PlanetSubject]
-
-    @Relationship(deleteRule: .cascade)
-    var studyPlan: StudyPlan?
 
     init(
         certificationId: String,
@@ -47,13 +45,15 @@ final class UserMission {
 }
 
 // MARK: - PlanetSubject (과목 = 행성)
+
 @Model
 final class PlanetSubject {
     var id: UUID
-    var subjectId: String             // JSON DB 과목 ID
-    var name: String                  // 예: "빅데이터 분석 기획"
-    var planetType: PlanetType        // 행성 종류
-    var order: Int                    // 탐사 순서
+    var subjectId: String
+    var name: String
+    var planetType: PlanetType
+    var order: Int
+    var totalEstimatedHours: Int      // 과목 전체 예상 공부 시간
     var isCompleted: Bool
     var completedAt: Date?
 
@@ -68,30 +68,33 @@ final class PlanetSubject {
         return Double(completed) / Double(chapters.count)
     }
 
-    init(subjectId: String, name: String, planetType: PlanetType, order: Int) {
+    init(subjectId: String, name: String, planetType: PlanetType, order: Int, totalEstimatedHours: Int) {
         self.id = UUID()
         self.subjectId = subjectId
         self.name = name
         self.planetType = planetType
         self.order = order
+        self.totalEstimatedHours = totalEstimatedHours
         self.isCompleted = false
         self.chapters = []
     }
 }
 
 // MARK: - ExplorationChapter (챕터 = 탐사 지점)
+
 @Model
 final class ExplorationChapter {
     var id: UUID
-    var chapterId: String             // JSON DB 챕터 ID
-    var title: String                 // 챕터 제목
+    var chapterId: String
+    var title: String
     var estimatedMinutes: Int         // 예상 공부 시간 (분)
-    var importance: ImportanceLevel   // 중요도 (high/medium/low)
-    var order: Int                    // 챕터 순서
-    var plannedDate: Date?            // AI가 배정한 공부 날짜
+    var weight: Int                   // 중요도 가중치 1~3
+    var importance: ImportanceLevel
+    var order: Int
+    var plannedDate: Date?            // 알고리즘이 배정한 공부 날짜
     var isCompleted: Bool
     var completedAt: Date?
-    var reminderIdentifier: String?   // EventKit 미리알림 ID
+    var reminderIdentifier: String?
 
     var subject: PlanetSubject?
 
@@ -103,12 +106,14 @@ final class ExplorationChapter {
         title: String,
         estimatedMinutes: Int,
         importance: ImportanceLevel,
-        order: Int
+        order: Int,
+        weight: Int
     ) {
         self.id = UUID()
         self.chapterId = chapterId
         self.title = title
         self.estimatedMinutes = estimatedMinutes
+        self.weight = weight
         self.importance = importance
         self.order = order
         self.isCompleted = false
@@ -116,60 +121,17 @@ final class ExplorationChapter {
     }
 }
 
-// MARK: - StudyPlan (AI 생성 공부 플랜)
-@Model
-final class StudyPlan {
-    var id: UUID
-    var generatedAt: Date
-    var claudeModel: String           // 생성에 사용된 Claude 모델 버전
-    var rawPlanJSON: String           // Claude 응답 원본 JSON 저장
-    var tips: [String]                // 과목/챕터별 꿀팁
-
-    var mission: UserMission?
-
-    @Relationship(deleteRule: .cascade)
-    var dailyAssignments: [DailyAssignment]
-
-    init(claudeModel: String, rawPlanJSON: String, tips: [String]) {
-        self.id = UUID()
-        self.generatedAt = Date()
-        self.claudeModel = claudeModel
-        self.rawPlanJSON = rawPlanJSON
-        self.tips = tips
-        self.dailyAssignments = []
-    }
-}
-
-// MARK: - DailyAssignment (일별 챕터 배정)
-@Model
-final class DailyAssignment {
-    var id: UUID
-    var date: Date
-    var chapterIds: [String]          // 해당 날짜에 배정된 챕터 ID 목록
-    var totalMinutes: Int
-    var isCompleted: Bool
-
-    var plan: StudyPlan?
-
-    init(date: Date, chapterIds: [String], totalMinutes: Int) {
-        self.id = UUID()
-        self.date = date
-        self.chapterIds = chapterIds
-        self.totalMinutes = totalMinutes
-        self.isCompleted = false
-    }
-}
-
 // MARK: - FocusSession (집중 타이머 세션)
+
 @Model
 final class FocusSession {
     var id: UUID
     var startedAt: Date
     var endedAt: Date?
     var plannedMinutes: Int
-    var actualMinutes: Int            // 실제 집중한 시간
-    var wasCompleted: Bool            // 정상 완료 여부 (중간 종료 = false)
-    var whiteNoiseType: String?       // 사용한 백색소음 종류
+    var actualMinutes: Int
+    var wasCompleted: Bool
+    var whiteNoiseType: String?
 
     var chapter: ExplorationChapter?
 
@@ -183,13 +145,13 @@ final class FocusSession {
 }
 
 // MARK: - MissedDayLog (미달성 기록)
+
 @Model
 final class MissedDayLog {
     var id: UUID
     var missedDate: Date
     var missedChapterIds: [String]
     var missedMinutes: Int
-    var recoveryStrategy: RecoveryStrategy?
     var isResolved: Bool
     var resolvedAt: Date?
 
@@ -205,10 +167,10 @@ final class MissedDayLog {
 // MARK: - Enums
 
 enum ExperienceLevel: String, Codable, CaseIterable {
-    case beginner = "beginner"       // 입문
-    case experienced = "experienced" // 경험자
+    case beginner = "beginner"
+    case experienced = "experienced"
 
-    var displayName: String {
+    nonisolated var displayName: String {
         switch self {
         case .beginner: return "입문"
         case .experienced: return "경험자"
@@ -225,7 +187,7 @@ enum PlanetType: String, Codable, CaseIterable {
     case uranus = "uranus"
     case neptune = "neptune"
 
-    var displayName: String {
+    nonisolated var displayName: String {
         switch self {
         case .mercury: return "수성"
         case .venus: return "금성"
@@ -237,15 +199,27 @@ enum PlanetType: String, Codable, CaseIterable {
         }
     }
 
-    var color: String {
+    nonisolated var color: String {
         switch self {
         case .mercury: return "#B5B5B5"
-        case .venus: return "#E8C47A"
-        case .mars: return "#C1440E"
+        case .venus:   return "#E8C47A"
+        case .mars:    return "#C1440E"
         case .jupiter: return "#C88B3A"
-        case .saturn: return "#E4D191"
-        case .uranus: return "#7DE8E8"
+        case .saturn:  return "#E4D191"
+        case .uranus:  return "#7DE8E8"
         case .neptune: return "#4B70DD"
+        }
+    }
+
+    nonisolated var emoji: String {
+        switch self {
+        case .mercury: return "⚫️"
+        case .venus:   return "🟡"
+        case .mars:    return "🔴"
+        case .jupiter: return "🟠"
+        case .saturn:  return "🪐"
+        case .uranus:  return "🔵"
+        case .neptune: return "💙"
         }
     }
 }
@@ -255,26 +229,19 @@ enum ImportanceLevel: String, Codable, CaseIterable {
     case medium = "medium"
     case low = "low"
 
-    var displayName: String {
+    nonisolated var displayName: String {
         switch self {
-        case .high: return "핵심"
+        case .high:   return "핵심"
         case .medium: return "중요"
-        case .low: return "보조"
+        case .low:    return "보조"
         }
     }
 
-    var weight: Double {
+    nonisolated var stars: Int {
         switch self {
-        case .high: return 1.5
-        case .medium: return 1.0
-        case .low: return 0.7
+        case .high:   return 3
+        case .medium: return 2
+        case .low:    return 1
         }
     }
-}
-
-enum RecoveryStrategy: String, Codable {
-    case autoDistribute = "auto_distribute"   // 자동 분배
-    case skipLowImportance = "skip_low"       // 중요도 낮은 챕터 스킵
-    case claudeReplan = "claude_replan"       // Claude 재플랜
-    case continueNormal = "continue_normal"   // 그냥 진행
 }
