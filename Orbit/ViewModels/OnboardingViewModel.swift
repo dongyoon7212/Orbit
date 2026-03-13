@@ -184,7 +184,7 @@ final class OnboardingViewModel {
                 experienceLevel: selectedExperience
             )
 
-            let tips = generatedPlan.tips.map { $0.tip }
+            let tips = generatedPlan.tips?.map { $0.tip } ?? []
             let studyPlan = StudyPlan(
                 claudeModel: "claude-sonnet-4-5",
                 rawPlanJSON: (try? JSONEncoder().encode(generatedPlan)).flatMap { String(data: $0, encoding: .utf8) } ?? "",
@@ -197,7 +197,7 @@ final class OnboardingViewModel {
                 let assignment = DailyAssignment(
                     date: date,
                     chapterIds: item.chapterIds,
-                    totalMinutes: item.totalMinutes
+                    totalMinutes: item.totalMinutes ?? 0
                 )
                 studyPlan.dailyAssignments.append(assignment)
                 modelContext.insert(assignment)

@@ -22,22 +22,22 @@ struct PlanRequest {
 
 struct GeneratedPlan: Codable {
     let dailySchedule: [DailyScheduleItem]
-    let tips: [SubjectTip]
-    let totalStudyDays: Int
-    let reviewWeekStart: String   // "YYYY-MM-DD"
+    let tips: [SubjectTip]?
+    let totalStudyDays: Int?
+    let reviewWeekStart: String?
 }
 
 struct DailyScheduleItem: Codable {
-    let date: String              // "YYYY-MM-DD"
+    let date: String
     let chapterIds: [String]
-    let totalMinutes: Int
+    let totalMinutes: Int?
     let memo: String?
 }
 
 struct SubjectTip: Codable {
     let subjectId: String
     let tip: String
-    let chapterTips: [ChapterTip]
+    let chapterTips: [ChapterTip]?
 }
 
 struct ChapterTip: Codable {
