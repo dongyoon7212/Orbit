@@ -155,7 +155,7 @@ actor ClaudeService {
 
         // Worker가 Anthropic API 형식을 그대로 전달하므로 messages 형식으로 전송
         let body: [String: Any] = [
-            "model": "claude-sonnet-4-5-20251101",
+            "model": "claude-sonnet-4-5",
             "max_tokens": 4096,
             "messages": [
                 ["role": "user", "content": prompt]
@@ -199,11 +199,20 @@ actor ClaudeService {
     // MARK: - 응답 파싱
 
     private func parsePlanResponse(_ text: String) throws -> GeneratedPlan {
-        // Claude가 ```json ... ``` 블록으로 감쌀 수 있으므로 추출
+        // 1) ```json ... ``` 블록 우선 추출
         let jsonText: String
-        if let start = text.range(of: "{"),
-           let end = text.range(of: "}", options: .backwards) {
-            jsonText = String(text[start.lowerBound...end.upperBound])
+        if let codeBlockStart = text.range(of: "```json"),
+           let codeBlockEnd = text.range(of: "```", range: codeBlockStart.upperBound..<text.endIndex) {
+            jsonText = String(text[codeBlockStart.upperBound..<codeBlockEnd.lowerBound])
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+        } else if let codeBlockStart = text.range(of: "```"),
+                  let codeBlockEnd = text.range(of: "```", range: codeBlockStart.upperBound..<text.endIndex) {
+            jsonText = String(text[codeBlockStart.upperBound..<codeBlockEnd.lowerBound])
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+        } else if let start = text.firstIndex(of: "{"),
+                  let end = text.lastIndex(of: "}") {
+            // 2) 코드블록 없으면 첫 { 부터 마지막 } 까지
+            jsonText = String(text[start...end])
         } else {
             jsonText = text
         }
@@ -215,7 +224,7 @@ actor ClaudeService {
         do {
             return try JSONDecoder().decode(GeneratedPlan.self, from: data)
         } catch {
-            throw ClaudeError.parseError("플랜 JSON 파싱 실패: \(error.localizedDescription)")
+            throw ClaudeError.parseError("플랜 JSON 파싱 실패: \(error.localizedDescription)\n원문: \(jsonText.prefix(300))")
         }
     }
 }
