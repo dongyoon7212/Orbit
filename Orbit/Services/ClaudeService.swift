@@ -88,9 +88,9 @@ actor ClaudeService {
 
         let subjectsDescription = request.subjects.map { subject in
             let chapters = subject.chapters.map { ch in
-                "  - [\(ch.importance.uppercased())] \(ch.title) (\(ch.estimatedMinutes)분)"
+                "  - ID:\(ch.id) [\(ch.importance.uppercased())] \(ch.title) (\(ch.estimatedMinutes)분)"
             }.joined(separator: "\n")
-            return "### \(subject.name)\n\(chapters)"
+            return "### 과목ID:\(subject.id) \(subject.name)\n\(chapters)"
         }.joined(separator: "\n\n")
 
         return """
@@ -114,30 +114,35 @@ actor ClaudeService {
         4. 경험자는 LOW 챕터 비중 줄이기
         5. 각 과목(subject)별로 순서대로 진행 (이전 과목 완료 후 다음 과목)
 
-        ## 응답 형식 (반드시 아래 JSON만 출력)
+        ## 주의사항
+        - chapterIds에는 반드시 위에 표기된 "ID:xxx" 형식의 실제 ID값만 사용 (챕터 제목 사용 금지)
+        - subjectId, chapterId도 동일하게 실제 ID값 사용
+        - 예시: "big_data_engineer_s1_c1" 형식
+
+        ## 응답 형식 (```json 코드블록 없이 순수 JSON만 출력)
         {
           "dailySchedule": [
             {
-              "date": "YYYY-MM-DD",
-              "chapterIds": ["chapter_id_1", "chapter_id_2"],
+              "date": "2026-03-14",
+              "chapterIds": ["big_data_engineer_s1_c1"],
               "totalMinutes": 60,
-              "memo": "선택적 메모"
+              "memo": "오늘의 학습 메모"
             }
           ],
           "tips": [
             {
-              "subjectId": "subject_id",
+              "subjectId": "big_data_engineer_s1",
               "tip": "과목 전체 꿀팁",
               "chapterTips": [
                 {
-                  "chapterId": "chapter_id",
+                  "chapterId": "big_data_engineer_s1_c1",
                   "tip": "챕터별 꿀팁"
                 }
               ]
             }
           ],
           "totalStudyDays": 30,
-          "reviewWeekStart": "YYYY-MM-DD"
+          "reviewWeekStart": "2026-04-01"
         }
         """
     }
